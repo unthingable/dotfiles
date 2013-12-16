@@ -1,5 +1,9 @@
-(setq initial-frame-alist '((width . 187) (height . 57)))
+;; global behavior
 
+(setq initial-frame-alist '((width . 187) (height . 57)))
+;; (desktop-save-mode 1)
+;; always stay current
+(global-auto-revert-mode t)
 
 ;; bootstrap packaging
 (require 'package)
@@ -24,6 +28,18 @@
 
 (when (not package-archive-contents) (package-refresh-contents))
 
+;; (require 'jedi)
+;; (setq jedi:setup-keys t)
+;; (add-hook 'python-mode-hook 'jedi:setup)
+
+;; (require 'sr-speedbar)
+
+(setq pe/omit-regex "\.\\(pyc\\)$")
+(require 'project-explorer)
+
+(require 'projectile)
+(projectile-global-mode)
+;; (setq projectile-require-project-root nil)
 
 ;; cyclable themes!
 (require 'solarized-theme)
@@ -59,7 +75,9 @@
 (require 'evil-paredit)
 (evil-mode 1)
 (add-hook 'emacs-lisp-mode-hook 'evil-paredit-mode)
-
+(add-hook 'python-mode-hook
+  (function (lambda ()
+          (setq evil-shift-width python-indent))))
 
 ;; random borrowed snippets
 (setq-default indicate-empty-lines t)
@@ -79,6 +97,8 @@
 
 ;; the internet said this helps
 (global-set-key (kbd "C-x C-b") 'ibuffer)
+(global-set-key (kbd "s-<up>") 'next-buffer)
+(global-set-key (kbd "s-<down>") 'previous-buffer)
 
 ;; makes the square visual bell go away
 (add-to-list 'load-path "~/.emacs.d/")
