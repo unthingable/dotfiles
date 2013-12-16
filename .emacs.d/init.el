@@ -106,7 +106,7 @@
   scroll-margin 1
   scroll-step 1
   scroll-conservatively 10000
-  setq mouse-wheel-progressive-speed nil
+  mouse-wheel-progressive-speed nil
   scroll-preserve-screen-position 1)
 
 
