@@ -4,6 +4,9 @@
 ;; (desktop-save-mode 1)
 ;; always stay current
 (global-auto-revert-mode t)
+(setq make-backup-files nil)
+(setq auto-save-default nil)
+
 
 ;; bootstrap packaging
 (require 'package)
@@ -84,8 +87,6 @@
 (when (not indicate-empty-lines)
   (toggle-indicate-empty-lines))
 
-(setq make-backup-files nil)
-
 
 ;; some keys
 (global-set-key (kbd "C-;") 'comment-or-uncomment-region)
@@ -95,14 +96,9 @@
 (global-set-key (kbd "C--") 'text-scale-decrease)
 (global-set-key (kbd "s-\\") 'indent-for-tab-command)
 
-;; the internet said this helps
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (global-set-key (kbd "s-<up>") 'next-buffer)
 (global-set-key (kbd "s-<down>") 'previous-buffer)
-
-;; makes the square visual bell go away
-(add-to-list 'load-path "~/.emacs.d/")
-(load "bell")
 
 
 ;; saner scrolling
@@ -110,4 +106,11 @@
   scroll-margin 1
   scroll-step 1
   scroll-conservatively 10000
+  setq mouse-wheel-progressive-speed nil
   scroll-preserve-screen-position 1)
+
+
+;; makes the square visual bell go away (this is also how we know
+;; everything has loaded)
+(add-to-list 'load-path "~/.emacs.d/")
+(load "bell")
