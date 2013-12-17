@@ -1,11 +1,12 @@
 ;; global behavior
 
-(setq initial-frame-alist '((width . 187) (height . 57)))
-;; (desktop-save-mode 1)
 ;; always stay current
 (global-auto-revert-mode t)
 (setq make-backup-files nil)
 (setq auto-save-default nil)
+
+(hl-line-mode 1)
+(menu-bar-mode 1)
 
 
 ;; bootstrap packaging
@@ -15,13 +16,18 @@
 (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
 (package-initialize)
 
-(defvar my-packages '(starter-kit
+(defvar my-packages '(
+                      starter-kit
                       starter-kit-lisp
                       starter-kit-bindings
-                      starter-kit-eshell
+                      dired+
+;;                      diredx
                       clojure-mode
                       clojure-test-mode
-                      cider
+                      hackernews
+                      nrepl
+                      paredit
+                      ;; cider
                       evil
                       evil-paredit))
 
@@ -45,7 +51,14 @@
 ;; (setq projectile-require-project-root nil)
 
 ;; cyclable themes!
-(require 'solarized-theme)
+(require 'color-theme)
+;; (color-theme-initialize)
+;; (require 'soothe-theme)
+;; (require 'tomorrow-night-theme)
+;; (require 'tomorrow-theme)
+;; (require 'tomorrow-night-bright-theme)
+
+(require 'color-theme-solarized)
 (setq my-color-themes (list 'solarized-dark
                             'solarized-light))
 
@@ -73,6 +86,15 @@
 (global-set-key [f8] 'my-theme-cycle)
 
 
+(require 'tabbar)
+; turn on the tabbar
+(tabbar-mode t)
+
+(require 'dired+)
+(require 'dired-x)
+(setq-default dired-omit-files-p t)
+(setq dired-omit-files "^\\.[^.]\\|\\.pdf$\\|\\.pyc$")
+
 ;; evil stuff ("M-x evil-mode" to toggle)
 (require 'evil)
 (require 'evil-paredit)
@@ -97,8 +119,12 @@
 (global-set-key (kbd "s-\\") 'indent-for-tab-command)
 
 (global-set-key (kbd "C-x C-b") 'ibuffer)
-(global-set-key (kbd "s-<up>") 'next-buffer)
-(global-set-key (kbd "s-<down>") 'previous-buffer)
+
+
+(global-set-key (kbd "s-<up>") 'tabbar-forward-group)
+(global-set-key (kbd "s-<down>") 'tabbar-backward-group)
+(global-set-key (kbd "s-[") 'tabbar-backward)
+(global-set-key (kbd "s-]") 'tabbar-forward)
 
 
 ;; saner scrolling
@@ -109,6 +135,19 @@
   mouse-wheel-progressive-speed nil
   scroll-preserve-screen-position 1)
 
+(require 'ido-ubiquitous)
+
+;; (desktop-save-mode 1)
+(setq desktop-load-locked-desktop t)
+(setq desktop-path '("~/.emacs.d/"))
+(setq desktop-dirname "~/.emacs.d/")
+(setq desktop-base-file-name "emacs-desktop")
+(desktop-read desktop-dirname)
+(defun my-desktop-save ()
+    (interactive)
+    ;; Don't call desktop-save-in-desktop-dir, as it prints a message.
+    (desktop-save desktop-dirname))
+(add-hook 'auto-save-hook 'my-desktop-save)
 
 ;; makes the square visual bell go away (this is also how we know
 ;; everything has loaded)
