@@ -2,12 +2,18 @@
 
 ;; always stay current
 (global-auto-revert-mode t)
+;; Also auto refresh dired, but be quiet about it
+(setq global-auto-revert-non-file-buffers t)
+(setq auto-revert-verbose nil)
+
 (setq make-backup-files nil)
-(setq auto-save-default nil)
+(setq auto-save-default t)
 
 (hl-line-mode 1)
 (menu-bar-mode 1)
-
+;; doesn't seem to do much
+(setq idle-update-delay 0)
+(setq idle-highlight-idle-time 0)
 
 ;; bootstrap packaging
 (require 'package)
@@ -43,24 +49,23 @@
 
 ;; (require 'sr-speedbar)
 
-(setq pe/omit-regex "\.\\(pyc\\)$")
-(require 'project-explorer)
+;; (setq pe/omit-regex "\.\\(pyc\\)$")
+;; (require 'project-explorer)
 
 (require 'projectile)
 (projectile-global-mode)
 ;; (setq projectile-require-project-root nil)
 
-;; cyclable themes!
-(require 'color-theme)
-;; (color-theme-initialize)
-;; (require 'soothe-theme)
-;; (require 'tomorrow-night-theme)
-;; (require 'tomorrow-theme)
-;; (require 'tomorrow-night-bright-theme)
-
-(require 'color-theme-solarized)
-(setq my-color-themes (list 'solarized-dark
-                            'solarized-light))
+(require 'color-theme-sanityinc-solarized)
+(require 'color-theme-sanityinc-tomorrow)
+(;; cyclable themes!
+setq my-color-themes (list 'sanityinc-solarized-dark
+                            'sanityinc-solarized-light
+                            'sanityinc-tomorrow-day
+                            'sanityinc-tomorrow-night
+                            'sanityinc-tomorrow-blue
+                            'sanityinc-tomorrow-bright
+                            'sanityinc-tomorrow-eighties))
 
 (defun my-theme-set-default () ; Set the first row
   (interactive)
@@ -82,13 +87,16 @@
 
 (setq theme-current my-color-themes)
 (setq color-theme-is-global nil) ; Initialization
-(my-theme-set-default)
+
+;; this messes with desktop save, so skip
+;; (my-theme-set-default)
 (global-set-key [f8] 'my-theme-cycle)
 
 
 (require 'tabbar)
 ; turn on the tabbar
 (tabbar-mode t)
+
 
 (require 'dired+)
 (require 'dired-x)
@@ -100,6 +108,7 @@
 (require 'evil-paredit)
 (evil-mode 1)
 (add-hook 'emacs-lisp-mode-hook 'evil-paredit-mode)
+;; evil doesn't always understant indent by default
 (add-hook 'python-mode-hook
   (function (lambda ()
           (setq evil-shift-width python-indent))))
@@ -135,7 +144,11 @@
   mouse-wheel-progressive-speed nil
   scroll-preserve-screen-position 1)
 
-(require 'ido-ubiquitous)
+
+;; because one bad apple (fullscreen without the stupid spaces)
+(setq ns-use-native-fullscreen nil)
+;; then M-x toggle-frame-fullscreen
+
 
 ;; (desktop-save-mode 1)
 (setq desktop-load-locked-desktop t)
@@ -148,8 +161,40 @@
     ;; Don't call desktop-save-in-desktop-dir, as it prints a message.
     (desktop-save desktop-dirname))
 (add-hook 'auto-save-hook 'my-desktop-save)
+(add-hook 'kill-emacs-hook 'my-desktop-save)
+
+
+(defun insert-current-date () (interactive)
+       (insert (shell-command-to-string "echo -n $(date +%Y-%m-%d)")))
+
 
 ;; makes the square visual bell go away (this is also how we know
 ;; everything has loaded)
 (add-to-list 'load-path "~/.emacs.d/")
 (load "bell")
+
+
+;; make Emacs tells us everything it does
+(defun command-peek-hook ()
+  (message "%S" this-command))
+;; uncomment to start the fun
+;; (add-hook 'pre-command-hook 'command-peek-hook)
+
+;; trying flx
+(require 'flx-ido)
+(ido-mode 1)
+(ido-everywhere 1)
+(flx-ido-mode 1)
+;; disable ido faces to see flx highlights.
+(setq ido-use-faces nil)
+
+;; Use ido everywhere
+(require 'ido-ubiquitous)
+(ido-ubiquitous-mode 1)
+
+;; Fix ido-ubiquitous for newer packages
+(defmacro ido-ubiquitous-use-new-completing-read (cmd package)
+  `(eval-after-load ,package
+     '(defadvice ,cmd (around ido-ubiquitous-new activate)
+        (let ((ido-ubiquitous-enable-compatibility nil))
+          ad-do-it))))
