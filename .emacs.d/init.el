@@ -124,7 +124,8 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 ;; evil doesn't always understant indent by default
 (add-hook 'python-mode-hook
   (function (lambda ()
-          (setq evil-shift-width python-indent))))
+              (setq evil-shift-width python-indent)
+              (modify-syntax-entry ?_ "w"))))
 
 ;; random borrowed snippets
 (setq-default indicate-empty-lines t)
@@ -229,8 +230,7 @@ setq my-color-themes (list 'sanityinc-solarized-dark
   "Adjust hl-line color relative to current color theme"
   (interactive)
   (let*
-      ((color (face-attribute 'default :background))
-       (value (hexrgb-value color))
+      ((value (hexrgb-value color))
        (threshold 0.32)
        (scale 0.9)
        (new-value
@@ -240,12 +240,14 @@ setq my-color-themes (list 'sanityinc-solarized-dark
                  (if (< value threshold) 0.15 (- 0.05)))))))
     (set-face-background
      hl-line-face
-     (hexrgb-increment-value color (- new-value value)))
+     (hexrgb-increment-value
+      (face-attribute 'default :background)
+      (- new-value value)))
     (message "%S %S" value new-value)))
 
 (add-hook 'after-init-hook 'my-fix-hl-line-color)
 
-(if (package-installed-p 'color-theme) 
+(when (package-installed-p 'color-theme) 
   (defadvice color-theme-install-at-point (after fix-hl-line activate)
     (my-fix-hl-line-color)))
 
