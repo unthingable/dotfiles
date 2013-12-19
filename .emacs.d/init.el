@@ -9,11 +9,10 @@
 (setq make-backup-files nil)
 (setq auto-save-default t)
 
-(hl-line-mode 1)
 (menu-bar-mode 1)
-;; doesn't seem to do much
-(setq idle-update-delay 0)
-(setq idle-highlight-idle-time 0)
+
+(setq idle-update-delay 0.5)
+(setq idle-highlight-idle-time 0.1)
 
 ;; bootstrap packaging
 (require 'package)
@@ -21,6 +20,10 @@
              '("marmalade" . "http://marmalade-repo.org/packages/"))
 (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
 (package-initialize)
+
+;; (require 'hl-line+)
+;; (toggle-hl-line-when-idle 1)
+;; (hl-line-when-idle-interval 1.0)
 
 (defvar my-packages '(
                       starter-kit
@@ -42,6 +45,14 @@
     (package-install p)))
 
 (when (not package-archive-contents) (package-refresh-contents))
+
+(require 'linum)
+(line-number-mode 1)
+(column-number-mode 1)  ;; Line numbers on left most column
+(global-linum-mode 1)
+
+;; KTHXBAI! undo some of the starter kit
+;; (remove-hook 'prog-mode-hook 'esk-turn-on-hl-line-mode)
 
 ;; (require 'jedi)
 ;; (setq jedi:setup-keys t)
@@ -90,7 +101,8 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 
 ;; this messes with desktop save, so skip
 ;; (my-theme-set-default)
-(global-set-key [f8] 'my-theme-cycle)
+;; (global-set-key [f8] 'my-theme-cycle)
+(global-set-key [f8] 'color-theme-select)
 
 
 (require 'tabbar)
@@ -107,6 +119,7 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 (require 'evil)
 (require 'evil-paredit)
 (evil-mode 1)
+(setq evil-default-cursor t)
 (add-hook 'emacs-lisp-mode-hook 'evil-paredit-mode)
 ;; evil doesn't always understant indent by default
 (add-hook 'python-mode-hook
@@ -170,21 +183,31 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 
 ;; makes the square visual bell go away (this is also how we know
 ;; everything has loaded)
-(add-to-list 'load-path "~/.emacs.d/")
-(load "bell")
+(setq ring-bell-function 'ignore)
+;; (add-to-list 'load-path "~/.emacs.d/")
+;; (load "bell")
 
 
 ;; make Emacs tells us everything it does
 (defun command-peek-hook ()
-  (message "%S" this-command))
+  (message "running %S" this-command))
 ;; uncomment to start the fun
 ;; (add-hook 'pre-command-hook 'command-peek-hook)
 
+(require 'ido)
+(ido-mode t)
+(setq ido-enable-prefix nil
+      ido-enable-flex-matching t
+      ido-case-fold nil
+      ido-auto-merge-work-directories-length -1
+      ido-create-new-buffer 'always
+      ido-use-filename-at-point nil
+      ido-max-prospects 10)
+
 ;; trying flx
 (require 'flx-ido)
-(ido-mode 1)
-(ido-everywhere 1)
-(flx-ido-mode 1)
+(ido-everywhere t)
+(flx-ido-mode t)
 ;; disable ido faces to see flx highlights.
 (setq ido-use-faces nil)
 
@@ -198,3 +221,33 @@ setq my-color-themes (list 'sanityinc-solarized-dark
      '(defadvice ,cmd (around ido-ubiquitous-new activate)
         (let ((ido-ubiquitous-enable-compatibility nil))
           ad-do-it))))
+
+;; (set-face-background hl-line-face "medium purple")
+;; fix hl-line color dynamically:
+(require 'hexrgb)
+(defun my-fix-hl-line-color ()
+  "Adjust hl-line color relative to current color theme"
+  (interactive)
+  (let*
+      ((color (face-attribute 'default :background))
+       (value (hexrgb-value color))
+       (threshold 0.32)
+       (scale 0.9)
+       (new-value
+        (+ threshold
+           (* scale
+              (+ (- value threshold)
+                 (if (< value threshold) 0.15 (- 0.05)))))))
+    (set-face-background
+     hl-line-face
+     (hexrgb-increment-value color (- new-value value)))
+    (message "%S %S" value new-value)))
+
+(add-hook 'after-init-hook 'my-fix-hl-line-color)
+
+(if (package-installed-p 'color-theme) 
+  (defadvice color-theme-install-at-point (after fix-hl-line activate)
+    (my-fix-hl-line-color)))
+
+(defadvice load-theme (after fix-hl-line activate)
+  (my-fix-hl-line-color))
