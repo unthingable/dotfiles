@@ -330,8 +330,8 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 (setq js2-basic-offset 2)
 (electric-indent-mode t)
 ;; indent, dammit!
-(define-key js2-mode-map (kbd "RET") 'reindent-then-newline-and-indent)
-(setq js2-bounce-indent-p t)
+(define-key js2-mode-map (kbd "RET") 'newline-and-indent)
+(setq js2-bounce-indent-p nil)
 
 (setq shift-select-mode t)
 
