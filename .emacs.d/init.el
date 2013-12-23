@@ -77,6 +77,7 @@
 (global-auto-complete-mode t)
 (require 'auto-complete-config)
 (ac-config-default)
+(setq ac-use-fuzzy t)
 
 (require 'linum)
 (line-number-mode 1)
@@ -198,6 +199,7 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 (when (not indicate-empty-lines)
   (toggle-indicate-empty-lines))
 
+(require 'buffer-move)
 
 ;; http://stackoverflow.com/questions/9688748/emacs-comment-uncomment-current-line
 (defun comment-or-uncomment-region-or-line ()
@@ -218,6 +220,10 @@ setq my-color-themes (list 'sanityinc-solarized-dark
     (paredit-comment-dwim)))
 
 ;; some keys
+(global-set-key (kbd "C-x C-j") 'dired-jump-other-window)
+(global-set-key (kbd "C-x j") 'direx:jump-to-directory-other-window)
+(global-set-key (kbd "C-x C-o") 'direx-project:jump-to-project-root-other-window)
+
 (global-set-key (kbd "C-;") 'comment-or-uncomment-region-or-line)
 (global-set-key (kbd "C-M-;") 'comment-sexp)
 (global-set-key (kbd "M-/") 'hippie-expand)
@@ -226,7 +232,6 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 (global-set-key (kbd "C--") 'text-scale-decrease)
 (global-set-key (kbd "s-\\") 'indent-for-tab-command)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
-
 
 (global-set-key (kbd "s-}") 'tabbar-forward-group)
 (global-set-key (kbd "s-{") 'tabbar-backward-group)
@@ -237,6 +242,12 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 (global-set-key [s-right] 'windmove-right) ; move to right window
 (global-set-key [s-up] 'windmove-up) ; move to upper window
 (global-set-key [s-down] 'windmove-down) ; move to bottom window
+(global-set-key [s-return] 'toggle-frame-fullscreen)
+
+(global-set-key (kbd "<C-S-up>")     'buf-move-up)
+(global-set-key (kbd "<C-S-down>")   'buf-move-down)
+(global-set-key (kbd "<C-S-left>")   'buf-move-left)
+(global-set-key (kbd "<C-S-right>")  'buf-move-right)
 
 
 ;; saner scrolling
