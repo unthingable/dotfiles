@@ -167,14 +167,25 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 
 (require 'dired+)
 (require 'dired-x)
+(require 'direx)
 (setq-default dired-omit-files-p t)
 (setq dired-omit-files "\\.pyc$")
 
 ;; evil stuff ("M-x evil-mode" to toggle)
 (require 'evil)
 (require 'evil-paredit)
-(evil-mode 1)
-(setq evil-default-cursor t)
+;; (evil-mode 1)
+(setq evil-auto-indent t)
+(setq evil-regexp-search t)
+(setq evil-want-C-i-jump t)
+(setq evil-normal-state-cursor '("white" box))
+(setq evil-insert-state-cursor '("white" bar))
+(add-hook 'text-mode-hook 'turn-on-evil-mode)
+(add-hook 'prog-mode-hook 'turn-on-evil-mode)
+(add-hook 'comint-mode-hook 'turn-on-evil-mode)
+(add-hook 'Info-mode-hook 'turn-off-evil-mode)
+
+;; (setq evil-default-cursor t)
 (add-hook 'emacs-lisp-mode-hook 'evil-paredit-mode)
 ;; evil doesn't always understant indent by default
 (add-hook 'python-mode-hook
@@ -214,14 +225,19 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 (global-set-key (kbd "C-+") 'text-scale-increase)
 (global-set-key (kbd "C--") 'text-scale-decrease)
 (global-set-key (kbd "s-\\") 'indent-for-tab-command)
-
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 
 
-(global-set-key (kbd "s-<up>") 'tabbar-forward-group)
-(global-set-key (kbd "s-<down>") 'tabbar-backward-group)
+(global-set-key (kbd "s-}") 'tabbar-forward-group)
+(global-set-key (kbd "s-{") 'tabbar-backward-group)
 (global-set-key (kbd "s-[") 'tabbar-backward)
 (global-set-key (kbd "s-]") 'tabbar-forward)
+
+(global-set-key [s-left] 'windmove-left) ; move to left window
+(global-set-key [s-right] 'windmove-right) ; move to right window
+(global-set-key [s-up] 'windmove-up) ; move to upper window
+(global-set-key [s-down] 'windmove-down) ; move to bottom window
+
 
 ;; saner scrolling
 (setq redisplay-dont-pause t
@@ -326,6 +342,7 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 
 
 ;; indentation settings
+(require 'js2-mode)
 (setq js-indent-level 2)
 (setq js2-basic-offset 2)
 (electric-indent-mode t)
