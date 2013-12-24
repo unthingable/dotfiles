@@ -157,8 +157,8 @@
 ;; some keys
 (global-set-key (kbd "M-<tab>") 'auto-complete)
 
-(global-set-key (kbd "C-x C-j") 'dired-jump)
-(global-set-key (kbd "C-x j") 'direx:jump-to-directory)
+(global-set-key (kbd "C-x j") 'dired-jump-other-window)
+(global-set-key (kbd "C-x C-j") 'direx:jump-to-directory-other-window)
 (global-set-key (kbd "C-x C-o") 'direx-project:jump-to-project-root)
 
 (global-set-key (kbd "C-;") 'comment-or-uncomment-region-or-line)
