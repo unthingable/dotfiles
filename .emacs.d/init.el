@@ -12,6 +12,7 @@
 
 ;; show the menu bar, on osx it costs nothing
 (menu-bar-mode 1)
+(setq use-dialog-box nil)
 (tool-bar-mode nil)
 
 (setq idle-update-delay 0.5) ; not sure what this does yet
@@ -73,11 +74,11 @@
 
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 
+(setq ac-use-fuzzy t)
 (require 'auto-complete)
 (global-auto-complete-mode t)
 (require 'auto-complete-config)
 (ac-config-default)
-(setq ac-use-fuzzy t)
 
 (require 'linum)
 (line-number-mode 1)
@@ -134,6 +135,8 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 (require 'tabbar)
 ; turn on the tabbar
 (tabbar-mode t)
+(setq tabbar-cycle-scope 'tabs)
+
 
 (require 'multiple-cursors)
 (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
@@ -179,8 +182,8 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 (setq evil-auto-indent t)
 (setq evil-regexp-search t)
 (setq evil-want-C-i-jump t)
-(setq evil-normal-state-cursor '("white" box))
-(setq evil-insert-state-cursor '("white" bar))
+;; (setq evil-normal-state-cursor '("white" box))
+;; (setq evil-insert-state-cursor '("white" bar))
 (add-hook 'text-mode-hook 'turn-on-evil-mode)
 (add-hook 'prog-mode-hook 'turn-on-evil-mode)
 (add-hook 'comint-mode-hook 'turn-on-evil-mode)
@@ -192,7 +195,7 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 (add-hook 'python-mode-hook
   (function (lambda ()
               (setq evil-shift-width python-indent)
-              (modify-syntax-entry ?_ "w"))))
+              (modify-syntax-entry ?_ "w"))))   ; recognize _* as valid identifiers
 
 ;; random borrowed snippets
 (setq-default indicate-empty-lines t)
@@ -220,9 +223,11 @@ setq my-color-themes (list 'sanityinc-solarized-dark
     (paredit-comment-dwim)))
 
 ;; some keys
-(global-set-key (kbd "C-x C-j") 'dired-jump-other-window)
-(global-set-key (kbd "C-x j") 'direx:jump-to-directory-other-window)
-(global-set-key (kbd "C-x C-o") 'direx-project:jump-to-project-root-other-window)
+(global-set-key (kbd "M-<tab>") 'auto-complete)
+
+(global-set-key (kbd "C-x C-j") 'dired-jump)
+(global-set-key (kbd "C-x j") 'direx:jump-to-directory)
+(global-set-key (kbd "C-x C-o") 'direx-project:jump-to-project-root)
 
 (global-set-key (kbd "C-;") 'comment-or-uncomment-region-or-line)
 (global-set-key (kbd "C-M-;") 'comment-sexp)
@@ -238,10 +243,10 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 (global-set-key (kbd "s-[") 'tabbar-backward)
 (global-set-key (kbd "s-]") 'tabbar-forward)
 
-(global-set-key [s-left] 'windmove-left) ; move to left window
-(global-set-key [s-right] 'windmove-right) ; move to right window
-(global-set-key [s-up] 'windmove-up) ; move to upper window
-(global-set-key [s-down] 'windmove-down) ; move to bottom window
+(global-set-key [s-left] 'windmove-left)
+(global-set-key [s-right] 'windmove-right)
+(global-set-key [s-up] 'windmove-up)
+(global-set-key [s-down] 'windmove-down)
 (global-set-key [s-return] 'toggle-frame-fullscreen)
 
 (global-set-key (kbd "<C-S-up>")     'buf-move-up)
@@ -263,6 +268,22 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 (setq ns-use-native-fullscreen nil)
 ;; then M-x toggle-frame-fullscreen
 
+(setq pop-up-windows nil)
+
+(defun my-display-buffer-function (buf not-this-window)
+  (if (and (not pop-up-frames)
+           (one-window-p)
+           (or not-this-window
+               (not (eq (window-buffer (selected-window)) buf)))
+           (> (frame-width) 162))
+      (split-window-horizontally))
+  ;; Note: Some modules sets `pop-up-windows' to t before calling
+  ;; `display-buffer' -- Why, oh, why!
+  (let ((display-buffer-function nil)
+        (pop-up-windows nil))
+    (display-buffer buf not-this-window)))
+
+(setq display-buffer-function 'my-display-buffer-function)
 
 ;; (desktop-save-mode 1)
 (setq desktop-load-locked-desktop t)
@@ -341,6 +362,10 @@ setq my-color-themes (list 'sanityinc-solarized-dark
       (- new-value value)))
     (message "%S %S" value new-value)))
 
+(defun my-bind-window-toggle ()
+  (interactive)
+  (set-window-dedicated-p this-window (not (window-dedicated-p this-window))))
+
 ;; (my-fix-hl-line-color)
 ;; (add-hook 'after-init-hook 'my-fix-hl-line-color)
 
@@ -359,23 +384,120 @@ setq my-color-themes (list 'sanityinc-solarized-dark
 (electric-indent-mode t)
 ;; indent, dammit!
 (define-key js2-mode-map (kbd "RET") 'newline-and-indent)
+;; (define-key python-mode-map (kbd "RET") 'newline-and-indent)
 (setq js2-bounce-indent-p nil)
 
 (setq shift-select-mode t)
+(delete-selection-mode t)
+
+
+;; what's going on with tabbar and flycheck?
+(defun my-tabbar-buffer-groups ()
+  "Return the list of group names the current buffer belongs to.
+Return a list of one element based on major mode."
+  (list
+   (cond
+    ;; Flycheck causes a buffer to temporarily become "Process" group, do not want
+    ;; ((or (get-buffer-process (current-buffer))
+    ;;      ;; Check if the major mode derives from `comint-mode' or
+    ;;      ;; `compilation-mode'.
+    ;;      (tabbar-buffer-mode-derived-p
+    ;;       major-mode '(comint-mode compilation-mode)))
+    ;;  "Process"
+    ;;  )
+    ((member (buffer-name)
+             '("*scratch*" "*Messages*"))
+     "Common"
+     )
+    ((eq major-mode 'dired-mode)
+     "Dired"
+     )
+    ((memq major-mode
+           '(help-mode apropos-mode Info-mode Man-mode))
+     "Help"
+     )
+    ((memq major-mode
+           '(rmail-mode
+             rmail-edit-mode vm-summary-mode vm-mode mail-mode
+             mh-letter-mode mh-show-mode mh-folder-mode
+             gnus-summary-mode message-mode gnus-group-mode
+             gnus-article-mode score-mode gnus-browse-killed-mode))
+     "Mail"
+     )
+    (t
+     ;; Return `mode-name' if not blank, `major-mode' otherwise.
+     (if (and (stringp mode-name)
+              ;; Take care of preserving the match-data because this
+              ;; function is called when updating the header line.
+              (save-match-data (string-match "[^ ]" mode-name)))
+         mode-name
+       (symbol-name major-mode))
+     ))))
+
+(setq tabbar-buffer-groups-function 'my-tabbar-buffer-groups)
+
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes (quote (solarized-light)))
+ ;; '(Linum-format "%7i ")
+ ;; '(ansi-color-faces-vector
+ ;;   [default bold shadow italic underline bold bold-italic bold])
+ ;; '(ansi-color-names-vector
+ ;;   (vector "#52676f" "#c60007" "#728a05" "#a57705" "#2075c7" "#c61b6e" "#259185" "#fcf4dc"))
+ ;; '(ansi-term-color-vector
+ ;;   [unspecified "#110F13" "#b13120" "#719f34" "#ceae3e" "#7c9fc9" "#7868b5" "#009090" "#F4EAD5"])
+ ;; '(background-color "#042028")
+ ;; '(background-mode dark)
+ ;; '(cursor-color "#708183")
+ '(custom-enabled-themes (quote (assemblage)))
  '(custom-safe-themes
    (quote
-    ("1e7e097ec8cb1f8c3a912d7e1e0331caeed49fef6cff220be63bd2a6ba4cc365" "e16a771a13a202ee6e276d06098bc77f008b73bbac4d526f160faa2d76c1dd0e" "923faef2c7ed017e63f517703c846c6190c31400261e8abdb1be06d5b46ea19a" "68769179097d800e415631967544f8b2001dae07972939446e21438b1010748c" "4c9ba94db23a0a3dea88ee80f41d9478c151b07cb6640b33bfc38be7c2415cc4" "4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" "fc5fcb6f1f1c1bc01305694c59a1a861b008c534cae8d0e48e4d5e81ad718bc6" "4aee8551b53a43a883cb0b7f3255d6859d766b6c5e14bcb01bed572fcbef4328" "085b401decc10018d8ed2572f65c5ba96864486062c0a2391372223294f89460" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" "dd4db38519d2ad7eb9e2f30bc03fba61a7af49a185edfd44e020aa5345e3dca7" "09feeb867d1ca5c1a33050d857ad6a5d62ad888f4b9136ec42002d6cdf310235" "caa9a86ff9b85f733b424f520ec6ecff3499a36f20eb8d40e3096dbbe1884069" "9dc64d345811d74b5cd0dac92e5717e1016573417b23811b2c37bb985da41da2" "6cf0e8d082a890e94e4423fc9e222beefdbacee6210602524b7c84d207a5dfb5" "6ecfc451f545459728a4a8b1d44ac4cdcc5d93465536807d0cb0647ef2bb12c4" "f831c1716ebc909abe3c851569a402782b01074e665a4c140e3e52214f7504a0" "89127a6e23df1b1120aa61bd7984f1d5f2747cad1e700614a68bdb7df77189ba" "929744da373c859c0f07325bc9c8d5cc30d418468c2ecb3a4f6cb2e3728d4775" "5562060e16ae3188e79d87e9ba69d70a6922448bcc5018205850d10696ed0116" "6394ba6170fd0bc9f24794d555fa84676d2bd5e3cfd50b3e270183223f8a6535" default)))
-)
+    ("f211f8db2328fb031908c9496582e7de2ae8abd5f59a27b4c1218720a7d11803" "2c73700ef9c2c3aacaf4b65a7751b8627b95a1fd8cebed8aa199f2afb089a85f" "787574e2eb71953390ed2fb65c3831849a195fd32dfdd94b8b623c04c7f753f0" "e890fd7b5137356ef5b88be1350acf94af90d9d6dd5c234978cd59a6b873ea94" "6cfe5b2f818c7b52723f3e121d1157cf9d95ed8923dbc1b47f392da80ef7495d" "246a51f19b632c27d7071877ea99805d4f8131b0ff7acb8a607d4fd1c101e163" "1177fe4645eb8db34ee151ce45518e47cc4595c3e72c55dc07df03ab353ad132" "1e7e097ec8cb1f8c3a912d7e1e0331caeed49fef6cff220be63bd2a6ba4cc365" "e16a771a13a202ee6e276d06098bc77f008b73bbac4d526f160faa2d76c1dd0e" "923faef2c7ed017e63f517703c846c6190c31400261e8abdb1be06d5b46ea19a" "68769179097d800e415631967544f8b2001dae07972939446e21438b1010748c" "4c9ba94db23a0a3dea88ee80f41d9478c151b07cb6640b33bfc38be7c2415cc4" "4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" "fc5fcb6f1f1c1bc01305694c59a1a861b008c534cae8d0e48e4d5e81ad718bc6" "4aee8551b53a43a883cb0b7f3255d6859d766b6c5e14bcb01bed572fcbef4328" "085b401decc10018d8ed2572f65c5ba96864486062c0a2391372223294f89460" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" "dd4db38519d2ad7eb9e2f30bc03fba61a7af49a185edfd44e020aa5345e3dca7" "09feeb867d1ca5c1a33050d857ad6a5d62ad888f4b9136ec42002d6cdf310235" "caa9a86ff9b85f733b424f520ec6ecff3499a36f20eb8d40e3096dbbe1884069" "9dc64d345811d74b5cd0dac92e5717e1016573417b23811b2c37bb985da41da2" "6cf0e8d082a890e94e4423fc9e222beefdbacee6210602524b7c84d207a5dfb5" "6ecfc451f545459728a4a8b1d44ac4cdcc5d93465536807d0cb0647ef2bb12c4" "f831c1716ebc909abe3c851569a402782b01074e665a4c140e3e52214f7504a0" "89127a6e23df1b1120aa61bd7984f1d5f2747cad1e700614a68bdb7df77189ba" "929744da373c859c0f07325bc9c8d5cc30d418468c2ecb3a4f6cb2e3728d4775" "5562060e16ae3188e79d87e9ba69d70a6922448bcc5018205850d10696ed0116" "6394ba6170fd0bc9f24794d555fa84676d2bd5e3cfd50b3e270183223f8a6535" default)))
+ '(direx:closed-icon "+ ")
+ '(direx:open-icon "- ")
+ ;; '(fci-rule-character-color "#202020")
+ ;; '(fci-rule-color "#e9e2cb")
+ ;; '(foreground-color "#708183")
+ ;; '(fringe-mode 4 nil (fringe))
+ ;; '(linum-format " %7d ")
+ ;; '(main-line-color1 "#1e1e1e")
+ ;; '(main-line-color2 "#111111")
+ ;; '(main-line-separator-style (quote chamfer))
+ ;; '(powerline-color1 "#1e1e1e")
+ ;; '(powerline-color2 "#111111")
+ ;; '(tabbar-auto-scroll-flag t)
+ ;; '(tabbar-mode t nil (tabbar))
+ ;; '(vc-annotate-background nil)
+ ;; '(vc-annotate-color-map
+ ;;   (quote
+ ;;    ((20 . "#c60007")
+ ;;     (40 . "#bd3612")
+ ;;     (60 . "#a57705")
+ ;;     (80 . "#728a05")
+ ;;     (100 . "#259185")
+ ;;     (120 . "#2075c7")
+ ;;     (140 . "#c61b6e")
+ ;;     (160 . "#5859b7")
+ ;;     (180 . "#c60007")
+ ;;     (200 . "#bd3612")
+ ;;     (220 . "#a57705")
+ ;;     (240 . "#728a05")
+ ;;     (260 . "#259185")
+ ;;     (280 . "#2075c7")
+ ;;     (300 . "#c61b6e")
+ ;;     (320 . "#5859b7")
+ ;;     (340 . "#c60007")
+ ;;     (360 . "#bd3612"))))
+ ;; '(vc-annotate-very-old-color nil)
+ )
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+
