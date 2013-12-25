@@ -49,6 +49,10 @@
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 
 
+;; ag
+(setq ag-reuse-window nil)
+
+
 ;; Autocomplete
 (setq ac-use-fuzzy t)
 (require 'auto-complete)
@@ -108,11 +112,13 @@
         ))
 
 
+(require 'helm-config)
+
 (require 'dired+)
 (require 'dired-x)
 ;; (require 'direx)
-(setq-default dired-omit-files-p t)
-(setq dired-omit-files "\\.pyc$")
+;; (dired-omit-mode t)
+;; (setq dired-omit-files "\\.pyc$")
 
 ;; Evil stuff ("M-x evil-mode" to toggle)
 (require 'evil)
@@ -134,6 +140,7 @@
   (function (lambda ()
               (setq evil-shift-width python-indent)
               (modify-syntax-entry ?_ "w"))))   ; recognize _* as valid identifiers
+;; (define-key python-mode-map (kbd "RET") 'evil-ret-and-indent)
 
 
 (require 'buffer-move)
@@ -142,10 +149,11 @@
 (defun comment-or-uncomment-region-or-line ()
     "Comments or uncomments the region or the current line if there's no active region."
     (interactive)
-    (if (region-active-p)
-        (comment-or-uncomment-region)
-      (comment-or-uncomment-region (line-beginning-position) (line-end-position))))
-
+    (let (beg end)
+        (if (region-active-p)
+            (setq beg (region-beginning) end (region-end))
+            (setq beg (line-beginning-position) end (line-end-position)))
+        (comment-or-uncomment-region beg end)))
 
 (defun comment-sexp ()
   "Comment out the sexp at point."
@@ -154,12 +162,14 @@
     (mark-sexp)
     (paredit-comment-dwim)))
 
+
 ;; some keys
 (global-set-key (kbd "M-<tab>") 'auto-complete)
+(global-set-key (kbd "M-S-<tab>") 'ac-fuzzy-complete)
 
-(global-set-key (kbd "C-x j") 'dired-jump-other-window)
+(global-set-key (kbd "C-x j") 'dired-jump)
 (global-set-key (kbd "C-x C-j") 'direx:jump-to-directory-other-window)
-(global-set-key (kbd "C-x C-o") 'direx-project:jump-to-project-root)
+(global-set-key (kbd "C-x C-o") 'direx-project:jump-to-project-root-other-window)
 
 (global-set-key (kbd "C-;") 'comment-or-uncomment-region-or-line)
 (global-set-key (kbd "C-M-;") 'comment-sexp)
@@ -169,6 +179,7 @@
 (global-set-key (kbd "C--") 'text-scale-decrease)
 (global-set-key (kbd "s-\\") 'indent-for-tab-command)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
+(global-set-key (kbd "s-R") 'previous-buffer)
 
 (global-set-key (kbd "s-}") 'tabbar-forward-group)
 (global-set-key (kbd "s-{") 'tabbar-backward-group)
@@ -187,21 +198,6 @@
 (global-set-key (kbd "<C-S-right>")  'buf-move-right)
 
 (global-set-key [f8] 'customize-themes)
-
-
-
-;; (desktop-save-mode 1)
-(setq desktop-load-locked-desktop t)
-(setq desktop-path '("~/.emacs.d/"))
-(setq desktop-dirname "~/.emacs.d/")
-(setq desktop-base-file-name "emacs-desktop")
-(desktop-read desktop-dirname)
-(defun my-desktop-save ()
-    (interactive)
-    ;; Don't call desktop-save-in-desktop-dir, as it prints a message.
-    (desktop-save desktop-dirname))
-(add-hook 'auto-save-hook 'my-desktop-save)
-(add-hook 'kill-emacs-hook 'my-desktop-save)
 
 
 (defun insert-current-date () (interactive)
@@ -291,7 +287,7 @@
 (electric-indent-mode t)
 ;; indent, dammit!
 (define-key js2-mode-map (kbd "RET") 'newline-and-indent)
-;; (define-key python-mode-map (kbd "RET") 'newline-and-indent)
+;; (define-key python-mode-map (kbd "RET") 'evil-ret-and-indent)
 (setq js2-bounce-indent-p nil)
 
 
@@ -346,52 +342,70 @@ Return a list of one element based on major mode."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- ;; '(ansi-color-faces-vector
- ;;   [default bold shadow italic underline bold bold-italic bold])
- ;; '(ansi-color-names-vector
- ;;   ["#212121" "#CC5542" "#6aaf50" "#7d7c61" "#5180b3" "#DC8CC3" "#9b55c3" "#bdbdb3"])
- '(custom-enabled-themes (quote (zenburn)))
+ '(ansi-color-faces-vector
+   [default bold shadow italic underline bold bold-italic bold])
+ '(ansi-color-names-vector
+   ["#3f3f3f" "#cc9393" "#7f9f7f" "#f0dfaf" "#8cd0d3" "#dc8cc3" "#93e0e3" "#dcdccc"])
+ '(custom-enabled-themes (quote (deeper-blue)))
  '(custom-safe-themes
    (quote
-    ("394504bd559027641b544952d6e9e1c6dcb306b4d1b2c4ad6b98d3e6b5459683" "3dd173744ae0990dd72094caef06c0b9176b3d98f0ee5d822d6a7e487c88d548" "5e1d1564b6a2435a2054aa345e81c89539a72c4cad8536cfe02583e0b7d5e2fa" "e83c94a6bfab82536cef63610ec58d08dfddd27752d860763055daf58d028aad" "f211f8db2328fb031908c9496582e7de2ae8abd5f59a27b4c1218720a7d11803" "2c73700ef9c2c3aacaf4b65a7751b8627b95a1fd8cebed8aa199f2afb089a85f" "787574e2eb71953390ed2fb65c3831849a195fd32dfdd94b8b623c04c7f753f0" "e890fd7b5137356ef5b88be1350acf94af90d9d6dd5c234978cd59a6b873ea94" "6cfe5b2f818c7b52723f3e121d1157cf9d95ed8923dbc1b47f392da80ef7495d" "246a51f19b632c27d7071877ea99805d4f8131b0ff7acb8a607d4fd1c101e163" "1177fe4645eb8db34ee151ce45518e47cc4595c3e72c55dc07df03ab353ad132" "1e7e097ec8cb1f8c3a912d7e1e0331caeed49fef6cff220be63bd2a6ba4cc365" "e16a771a13a202ee6e276d06098bc77f008b73bbac4d526f160faa2d76c1dd0e" "923faef2c7ed017e63f517703c846c6190c31400261e8abdb1be06d5b46ea19a" "68769179097d800e415631967544f8b2001dae07972939446e21438b1010748c" "4c9ba94db23a0a3dea88ee80f41d9478c151b07cb6640b33bfc38be7c2415cc4" "4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" "fc5fcb6f1f1c1bc01305694c59a1a861b008c534cae8d0e48e4d5e81ad718bc6" "4aee8551b53a43a883cb0b7f3255d6859d766b6c5e14bcb01bed572fcbef4328" "085b401decc10018d8ed2572f65c5ba96864486062c0a2391372223294f89460" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" "dd4db38519d2ad7eb9e2f30bc03fba61a7af49a185edfd44e020aa5345e3dca7" "09feeb867d1ca5c1a33050d857ad6a5d62ad888f4b9136ec42002d6cdf310235" "caa9a86ff9b85f733b424f520ec6ecff3499a36f20eb8d40e3096dbbe1884069" "9dc64d345811d74b5cd0dac92e5717e1016573417b23811b2c37bb985da41da2" "6cf0e8d082a890e94e4423fc9e222beefdbacee6210602524b7c84d207a5dfb5" "6ecfc451f545459728a4a8b1d44ac4cdcc5d93465536807d0cb0647ef2bb12c4" "f831c1716ebc909abe3c851569a402782b01074e665a4c140e3e52214f7504a0" "89127a6e23df1b1120aa61bd7984f1d5f2747cad1e700614a68bdb7df77189ba" "929744da373c859c0f07325bc9c8d5cc30d418468c2ecb3a4f6cb2e3728d4775" "5562060e16ae3188e79d87e9ba69d70a6922448bcc5018205850d10696ed0116" "6394ba6170fd0bc9f24794d555fa84676d2bd5e3cfd50b3e270183223f8a6535" default)))
+    ("579e9950513524d8739e08eae289419cfcb64ed9b7cc910dd2e66151c77975c4" "89f613708c8018d71d97e3da7a1e23c8963b798252f1ac2ab813ad63b7a4b341" "394504bd559027641b544952d6e9e1c6dcb306b4d1b2c4ad6b98d3e6b5459683" "3dd173744ae0990dd72094caef06c0b9176b3d98f0ee5d822d6a7e487c88d548" "5e1d1564b6a2435a2054aa345e81c89539a72c4cad8536cfe02583e0b7d5e2fa" "e83c94a6bfab82536cef63610ec58d08dfddd27752d860763055daf58d028aad" "f211f8db2328fb031908c9496582e7de2ae8abd5f59a27b4c1218720a7d11803" "2c73700ef9c2c3aacaf4b65a7751b8627b95a1fd8cebed8aa199f2afb089a85f" "787574e2eb71953390ed2fb65c3831849a195fd32dfdd94b8b623c04c7f753f0" "e890fd7b5137356ef5b88be1350acf94af90d9d6dd5c234978cd59a6b873ea94" "6cfe5b2f818c7b52723f3e121d1157cf9d95ed8923dbc1b47f392da80ef7495d" "246a51f19b632c27d7071877ea99805d4f8131b0ff7acb8a607d4fd1c101e163" "1177fe4645eb8db34ee151ce45518e47cc4595c3e72c55dc07df03ab353ad132" "1e7e097ec8cb1f8c3a912d7e1e0331caeed49fef6cff220be63bd2a6ba4cc365" "e16a771a13a202ee6e276d06098bc77f008b73bbac4d526f160faa2d76c1dd0e" "923faef2c7ed017e63f517703c846c6190c31400261e8abdb1be06d5b46ea19a" "68769179097d800e415631967544f8b2001dae07972939446e21438b1010748c" "4c9ba94db23a0a3dea88ee80f41d9478c151b07cb6640b33bfc38be7c2415cc4" "4cf3221feff536e2b3385209e9b9dc4c2e0818a69a1cdb4b522756bcdf4e00a4" "fc5fcb6f1f1c1bc01305694c59a1a861b008c534cae8d0e48e4d5e81ad718bc6" "4aee8551b53a43a883cb0b7f3255d6859d766b6c5e14bcb01bed572fcbef4328" "085b401decc10018d8ed2572f65c5ba96864486062c0a2391372223294f89460" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" "dd4db38519d2ad7eb9e2f30bc03fba61a7af49a185edfd44e020aa5345e3dca7" "09feeb867d1ca5c1a33050d857ad6a5d62ad888f4b9136ec42002d6cdf310235" "caa9a86ff9b85f733b424f520ec6ecff3499a36f20eb8d40e3096dbbe1884069" "9dc64d345811d74b5cd0dac92e5717e1016573417b23811b2c37bb985da41da2" "6cf0e8d082a890e94e4423fc9e222beefdbacee6210602524b7c84d207a5dfb5" "6ecfc451f545459728a4a8b1d44ac4cdcc5d93465536807d0cb0647ef2bb12c4" "f831c1716ebc909abe3c851569a402782b01074e665a4c140e3e52214f7504a0" "89127a6e23df1b1120aa61bd7984f1d5f2747cad1e700614a68bdb7df77189ba" "929744da373c859c0f07325bc9c8d5cc30d418468c2ecb3a4f6cb2e3728d4775" "5562060e16ae3188e79d87e9ba69d70a6922448bcc5018205850d10696ed0116" "6394ba6170fd0bc9f24794d555fa84676d2bd5e3cfd50b3e270183223f8a6535" default)))
  '(direx:closed-icon "+ ")
  '(direx:open-icon "- ")
- ;; '(fci-rule-color "#2e2e2e")
- ;; '(fringe-mode 6 nil (fringe))
- ;; '(linum-format " %7d ")
- ;; '(main-line-color1 "#191919")
- ;; '(main-line-color2 "#111111")
- ;; '(powerline-color1 "#191919")
- ;; '(powerline-color2 "#111111")
- ;; '(vc-annotate-background "#3b3b3b")
- ;; '(vc-annotate-color-map
- ;;   (quote
- ;;    ((20 . "#dd5542")
- ;;     (40 . "#CC5542")
- ;;     (60 . "#fb8512")
- ;;     (80 . "#baba36")
- ;;     (100 . "#bdbc61")
- ;;     (120 . "#7d7c61")
- ;;     (140 . "#6abd50")
- ;;     (160 . "#6aaf50")
- ;;     (180 . "#6aa350")
- ;;     (200 . "#6a9550")
- ;;     (220 . "#6a8550")
- ;;     (240 . "#6a7550")
- ;;     (260 . "#9b55c3")
- ;;     (280 . "#6CA0A3")
- ;;     (300 . "#528fd1")
- ;;     (320 . "#5180b3")
- ;;     (340 . "#6380b3")
- ;;     (360 . "#DC8CC3"))))
- ;; '(vc-annotate-very-old-color "#DC8CC3")
- )
+ '(fci-rule-color "#383838")
+ '(main-line-color1 "#29282E")
+ '(main-line-color2 "#292A24")
+ '(powerline-color1 "#29282E")
+ '(powerline-color2 "#292A24")
+ '(tool-bar-mode nil)
+ '(vc-annotate-background "#2b2b2b")
+ '(vc-annotate-color-map
+   (quote
+    ((20 . "#bc8383")
+     (40 . "#cc9393")
+     (60 . "#dfaf8f")
+     (80 . "#d0bf8f")
+     (100 . "#e0cf9f")
+     (120 . "#f0dfaf")
+     (140 . "#5f7f5f")
+     (160 . "#7f9f7f")
+     (180 . "#8fb28f")
+     (200 . "#9fc59f")
+     (220 . "#afd8af")
+     (240 . "#bfebbf")
+     (260 . "#93e0e3")
+     (280 . "#6ca0a3")
+     (300 . "#7cb8bb")
+     (320 . "#8cd0d3")
+     (340 . "#94bff3")
+     (360 . "#dc8cc3"))))
+ '(vc-annotate-very-old-color "#dc8cc3"))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+
+;; because one bad apple (fullscreen without the stupid spaces)
+(setq ns-use-native-fullscreen nil)
+;; then M-x toggle-frame-fullscreen
+
+
+;; (desktop-save-mode 1)
+(setq desktop-load-locked-desktop t)
+(setq desktop-path '("~/.emacs.d/"))
+(setq desktop-dirname "~/.emacs.d/")
+(setq desktop-base-file-name "emacs-desktop")
+(desktop-read desktop-dirname)
+(defun my-desktop-save ()
+    (interactive)
+    ;; Don't call desktop-save-in-desktop-dir, as it prints a message.
+    (desktop-save desktop-dirname))
+(add-hook 'auto-save-hook 'my-desktop-save)
+(add-hook 'kill-emacs-hook 'my-desktop-save)
+
 
 ;; global behavior
 
@@ -410,9 +424,6 @@ Return a list of one element based on major mode."
 (setq use-dialog-box nil)
 (tool-bar-mode nil)
 
-;; because one bad apple (fullscreen without the stupid spaces)
-(setq ns-use-native-fullscreen nil)
-;; then M-x toggle-frame-fullscreen
 
 (setq pop-up-windows nil)
 (setq-default indicate-empty-lines t)
