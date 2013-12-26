@@ -119,6 +119,8 @@
 ;; (require 'direx)
 ;; (dired-omit-mode t)
 ;; (setq dired-omit-files "\\.pyc$")
+(define-key direx:direx-mode-map [mouse-1] nil)
+(define-key direx:direx-mode-map [mouse-2] nil)
 
 ;; Evil stuff ("M-x evil-mode" to toggle)
 (require 'evil)
@@ -167,8 +169,10 @@
 (global-set-key (kbd "M-<tab>") 'auto-complete)
 (global-set-key (kbd "M-S-<tab>") 'ac-fuzzy-complete)
 
+;; Ponder some more.
 (global-set-key (kbd "C-x j") 'dired-jump)
-(global-set-key (kbd "C-x C-j") 'direx:jump-to-directory-other-window)
+(global-set-key (kbd "C-x C-j") 'direx:jump-to-directory)
+(global-set-key (kbd "C-x 4 C-j") 'direx:jump-to-directory-other-window)
 (global-set-key (kbd "C-x C-o") 'direx-project:jump-to-project-root-other-window)
 
 (global-set-key (kbd "C-;") 'comment-or-uncomment-region-or-line)
