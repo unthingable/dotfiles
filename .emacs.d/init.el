@@ -50,7 +50,8 @@
 
 
 ;; ag
-(setq ag-reuse-window nil)
+(setq ag-reuse-window t)
+(setq ag-reuse-buffers t)
 
 
 ;; Autocomplete
@@ -82,8 +83,6 @@
 
 
 (require 'multiple-cursors)
-(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-(global-set-key (kbd "C->") 'mc/mark-next-like-this)
 ;; (global-set-key (kbd "C-<") 'mc/mark-previous-word-like-this)
 ;; (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
 (setq mc/cmds-to-run-for-all
@@ -177,6 +176,9 @@
                   (split-window-right)
                   (other-window -1)))
 
+(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+(global-set-key (kbd "C->") 'mc/mark-all-like-this-dwim)
+
 ;; Ponder some more.
 (global-set-key (kbd "C-x j") 'dired-jump)
 (global-set-key (kbd "C-x 4 j") 'dired-jump-other-window)
@@ -211,6 +213,8 @@
 (global-set-key (kbd "<C-S-right>")  'buf-move-right)
 
 (global-set-key (kbd "<M-s-down>") 'find-tag)
+(global-set-key (kbd "s-d") 'isearch-forward-symbol-at-point)
+(global-set-key (kbd "s-G") 'isearch-repeat-backward)
 
 (global-set-key [f8] 'customize-themes)
 
@@ -328,7 +332,7 @@ Return a list of one element based on major mode."
     ((eq major-mode 'dired-mode)
      "Dired"
      )
-    ((eq major-mode 'direx-mode)
+    ((eq major-mode 'direx:direx-mode)
      "Direx"
      )
     ((memq major-mode
@@ -469,6 +473,8 @@ Return a list of one element based on major mode."
 (add-hook 'auto-save-hook 'my-desktop-save)
 (add-hook 'kill-emacs-hook 'my-desktop-save)
 
+;; save more
+(add-hook 'focus-out-hook 'save-buffer)
 
 ;; global behavior
 
