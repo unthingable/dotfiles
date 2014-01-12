@@ -4,6 +4,8 @@
              (file-name-as-directory "~/.emacs.d/replace-colorthemes/"))
 ;; (byte-recompile-directory (expand-file-name "~/.emacs.d") 0)
 
+(defun windmove-default-keybindings () (message "windmove: no wai"))
+
 ;; bootstrap packaging
 (let ((default-directory "~/.emacs.d/vendor/"))
   (normal-top-level-add-subdirs-to-load-path))
@@ -20,7 +22,14 @@
 (package-initialize)
 
 (defvar my-packages '(
+                      auto-complete
+                      starter-kit
+                      starter-kit-lisp
+                      starter-kit-bindings
+                      js2-mode
+                      buffer-move
                       dired+
+                      ;; direx
                       clojure-mode
                       clojure-test-mode
                       hackernews
@@ -33,7 +42,11 @@
                       hexrgb
                       ;; cider
                       evil
-                      evil-paredit))
+                      evil-paredit
+                      multiple-cursors
+                      keyfreq
+                      rainbow-mode
+                      rainbow-delimiters))
 
 (dolist (p my-packages)
   (when (not (package-installed-p p))
@@ -47,7 +60,14 @@
 ;; (require 'starter-kit-js)
 
 (require 'enaml)
-(add-to-list 'auto-mode-alist  '("\\.enaml$" . enaml-mode))
+;; (add-to-list 'auto-mode-alist  '("\\.enaml$" . enaml-mode))
+;; (add-hook 'enaml-mode-hook
+;;           (lambda ()
+;;             (set (make-local-variable 'electric-indent-functions)
+;;                  (list (lambda (arg) 'no-indent)))))
+(define-key enaml-mode-map [tab] 'python-indent-shift-right)
+(define-key enaml-mode-map [S-tab] 'python-indent-shift-left)
+
 
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
@@ -236,8 +256,10 @@
 (global-set-key (kbd "<M-s-down>") 'projectile-find-tag-interactive)
 (global-set-key (kbd "s-d") 'isearch-forward-symbol-at-point)
 (global-set-key (kbd "s-G") 'isearch-repeat-backward)
+(global-set-key (kbd "s-K") 'undo-kill-buffer)
 
 (global-set-key [f8] 'customize-themes)
+(global-set-key (kbd "M-s-ƒ") 'toggle-frame-fullscreen)
 
 
 ;; format-time-string is better, this left here for reference
@@ -435,6 +457,9 @@ Return a list of one element based on major mode."
 (setq ns-use-native-fullscreen nil)
 ;; then M-x toggle-frame-fullscreen
 
+;; always split vertically
+(setq split-height-threshold nil)
+(setq split-width-threshold 200) ; may need to tune this
 
 ;; (desktop-save-mode 1)
 (setq desktop-load-locked-desktop t)
@@ -510,7 +535,7 @@ Return a list of one element based on major mode."
 
 ;; fucking auto-fill
 (defun auto-fill-mode (args)
-  (message "fuck off"))
+  (message "auto-fill: no wai"))
 
 (global-rainbow-delimiters-mode t)
 (rainbow-delimiters-mode t)
@@ -557,6 +582,23 @@ Return a list of one element based on major mode."
    0.9
    9))
 
+;; borrowed from http://www.emacswiki.org/emacs/RecentFiles
+;; (not quite working)
+(defun undo-kill-buffer (arg)
+  "Re-open the last buffer killed.  With ARG, re-open the nth buffer."
+  (interactive "p")
+  (let ((recently-killed-list (copy-sequence recentf-list))
+	 (buffer-files-list
+	  (delq nil (mapcar (lambda (buf)
+			      (when (buffer-file-name buf)
+				(expand-file-name (buffer-file-name buf)))) (buffer-list)))))
+    (mapc
+     (lambda (buf-file)
+       (setq recently-killed-list
+	     (delq buf-file recently-killed-list)))
+     buffer-files-list)
+    (find-file
+     (if arg (nth arg recently-killed-list)
+       (car recently-killed-list)))))
 
-(load-file "pelican.el")
-
+;; (load-file "pelican.el")
