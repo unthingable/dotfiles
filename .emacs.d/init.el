@@ -68,17 +68,22 @@
 (define-key enaml-mode-map [tab] 'python-indent-shift-right)
 (define-key enaml-mode-map [S-tab] 'python-indent-shift-left)
 
+(require 'cider)
+(define-key clojure-mode-map [s-return] 'cider-eval-region)
 
+
+(require 'asciidoc-mode)
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
-(add-to-list 'auto-mode-alist '("\\.asciidoc\\'" . adoc-mode))
+(add-to-list 'auto-mode-alist '("\\.asciidoc\\'" . asciidoc-mode))
 ;; (setq auto-mode-alist (rassq-delete-all 'visual-line-mode auto-mode-alist))
 (add-hook 'markdown-mode-hook (lambda ()
                                 ;; (visual-line-mode t)
                                 (turn-off-evil-mode)))
-(add-hook 'adoc-mode-hook (lambda () (visual-line-mode t)))
+(add-hook 'asciidoc-mode-hook (lambda () (visual-line-mode t)))
 (auto-fill-mode -1)
-(remove-hook 'text-mode-hook 'turn-on-auto-fill)
+(remove-hook 'text-mode-hook #'turn-on-auto-fill)
+(remove-hook 'prog-mode-hook #'turn-on-auto-fill)
 (setq line-move-visual nil)
 
 ;; ag
@@ -348,8 +353,10 @@
 
 ;; indentation settings
 (require 'js2-mode)
+(setq js2-use-font-lock-faces t)
 (setq js-indent-level 2)
 (setq js2-basic-offset 2)
+
 (electric-indent-mode t)
 ;; indent, dammit!
 (define-key js2-mode-map (kbd "RET") 'newline-and-indent)
@@ -406,7 +413,7 @@ Return a list of one element based on major mode."
        (if (projectile-project-p)
            (if my-group-by-project
                (projectile-project-name)
-             (format "%s:%s" (projectile-project-name) group))
+             (format "%s:%s" (projectile-project-root) group))
          group))
      ))))
 
@@ -609,7 +616,7 @@ Return a list of one element based on major mode."
 (defun auto-fill-mode (args)
   (message "auto-fill: no wai"))
 
-(global-rainbow-delimiters-mode t)
+;; (global-rainbow-delimiters-mode t)
 (rainbow-delimiters-mode t)
 
 ;; parens too bleak?
