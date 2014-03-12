@@ -1,3 +1,8 @@
+;; fucking auto-fill
+;; (defun auto-fill-mode (args)
+;;   (message "auto-fill: no wai"))
+
+
 ;; ** PACKAGES
 ;; https://github.com/emacs-jp/replace-colorthemes
 (add-to-list 'custom-theme-load-path
@@ -15,7 +20,7 @@
 (require 'package)
 
 (setq package-archives '(("elpa" . "http://tromey.com/elpa/")
-                         ("melpa" . "http://melpa.milkbox.net/packages/")
+                         ;; ("melpa" . "http://melpa.milkbox.net/packages/")
                          ("gnu" . "http://elpa.gnu.org/packages/")
                          ("marmalade" . "http://marmalade-repo.org/packages/")))
 (package-initialize)
@@ -69,21 +74,35 @@
 (define-key enaml-mode-map [S-tab] 'python-indent-shift-left)
 
 (require 'cider)
-(define-key clojure-mode-map [s-return] 'cider-eval-region)
+(define-key clojure-mode-map [s-return] (lambda ()
+                                          (interactive)
+                                          (if (region-active-p)
+                                              (cider-eval-region (region-beginning) (region-end))
+                                            (cider-eval-last-sexp))))
+
+(require 'tidal)
+(define-key tidal-mode-map [s-return] (lambda ()
+                                          (interactive)
+                                          (if (region-active-p)
+                                              (progn (previous-line)
+                                                (tidal-run-multiple-lines))
+                                            (tidal-run-line))))
+(define-key tidal-mode-map (kbd "s-.") (lambda ()
+                                         (interactive)
+                                         (tidal-send-string "hush")))
 
 
 (require 'asciidoc-mode)
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+(add-to-list 'auto-mode-alist '("\\.pp\\'" . puppet-mode))
 (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
 (add-to-list 'auto-mode-alist '("\\.asciidoc\\'" . asciidoc-mode))
 ;; (setq auto-mode-alist (rassq-delete-all 'visual-line-mode auto-mode-alist))
+(add-hook 'text-mode-hook 'turn-on-visual-line-mode)
 (add-hook 'markdown-mode-hook (lambda ()
                                 ;; (visual-line-mode t)
                                 (turn-off-evil-mode)))
 (add-hook 'asciidoc-mode-hook (lambda () (visual-line-mode t)))
-(auto-fill-mode -1)
-(remove-hook 'text-mode-hook #'turn-on-auto-fill)
-(remove-hook 'prog-mode-hook #'turn-on-auto-fill)
 (setq line-move-visual nil)
 
 ;; ag
@@ -190,6 +209,9 @@
                       (setq ac-use-fuzzy nil)
                       (modify-syntax-entry ?_ "w"))))   ; recognize _* as valid identifiers
 
+(add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
+(add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
+
 (require 'buffer-move)
 
 ;; http://stackoverflow.com/questions/9688748/emacs-comment-uncomment-current-line
@@ -201,6 +223,19 @@
             (setq beg (region-beginning) end (region-end))
             (setq beg (line-beginning-position) end (line-end-position)))
         (comment-or-uncomment-region beg end)))
+
+;; (defun comment-or-uncomment-region-or-line ()
+;;     "Comments or uncomments the region or the current line if there's no active region."
+;;     (interactive)
+;;     (apply-to-region-or-line 'comment-or-uncomment-region))
+
+;; (defun apply-to-region-or-line (fun)
+;;   (let (beg end)
+;;     (if (region-active-p)
+;;         (setq beg (region-beginning) end (region-end))
+;;       (setq beg (line-beginning-position) end (line-end-position)))
+;;     (apply fun '(beg end))))
+
 
 (defun comment-sexp ()
   "Comment out the sexp at point."
@@ -274,6 +309,7 @@
 
 (global-set-key [f8] 'customize-themes)
 (global-set-key (kbd "M-s-ƒ") 'toggle-frame-fullscreen)
+
 
 
 ;; format-time-string is better, this left here for reference
@@ -497,9 +533,13 @@ Return a list of one element based on major mode."
  '(main-line-color1 "#1e1e1e")
  '(main-line-color2 "#111111")
  '(main-line-separator-style (quote chamfer))
+ '(org-indirect-buffer-display (quote current-window))
  '(powerline-color1 "#1e1e1e")
  '(powerline-color2 "#111111")
  '(projectile-tags-command "/usr/local/bin/ctags -Re %s")
+ '(sml/inactive-background-color "gray40")
+ '(sml/shorten-modes t)
+ '(sml/theme nil)
  '(vc-annotate-background nil)
  '(vc-annotate-color-map
    (quote
@@ -612,10 +652,6 @@ Return a list of one element based on major mode."
 
 (setq ring-bell-function 'ignore) ; shut up!
 
-;; fucking auto-fill
-(defun auto-fill-mode (args)
-  (message "auto-fill: no wai"))
-
 ;; (global-rainbow-delimiters-mode t)
 (rainbow-delimiters-mode t)
 
@@ -684,6 +720,30 @@ Return a list of one element based on major mode."
 
 ;; (require 'org-freemind)
 
+;; **** ORG ****
+(require 'org-install)
+(require 'org-table)
+(require 'org)
+(require 'org-archive)
+(require 'epresent)
+(require 'org-present)
+
+; Some initial langauges we want org-babel to support
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '(
+   (sh . t)
+   (python . t)
+   (R . t)
+   (ruby . t)
+   (ditaa . t)
+   (dot . t)
+   (octave . t)
+   (sqlite . t)
+   (perl . t)
+   ))
+(setq org-src-fontify-natively t)
+
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
 (global-set-key "\C-cb" 'org-iswitchb)
@@ -710,3 +770,42 @@ Return a list of one element based on major mode."
                "* PHONE %? :PHONE:\n%U" :clock-in t :clock-resume t)
               ("h" "Habit" entry (file org-default-notes-file)
                "* NEXT %?\n%U\n%a\nSCHEDULED: %(format-time-string \"<%Y-%m-%d %a .+1d/3d>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: NEXT\n:END:\n"))))
+
+(setq org-refile-targets (quote ((nil :maxlevel . 9)
+                                 (org-agenda-files :maxlevel . 9))))
+; Use full outline paths for refile targets - we file directly with IDO
+(setq org-refile-use-outline-path t)
+
+; Targets complete directly with IDO
+(setq org-outline-path-complete-in-steps nil)
+
+; Allow refile to create parent tasks with confirmation
+(setq org-refile-allow-creating-parent-nodes (quote confirm))
+
+; Use IDO for both buffer and file completion and ido-everywhere to t
+(setq org-completion-use-ido t)
+
+
+(auto-fill-mode -1)
+(turn-off-auto-fill)
+(remove-hook 'text-mode-hook #'turn-on-auto-fill)
+(remove-hook 'prog-mode-hook #'turn-on-auto-fill)
+
+(defun auto-fill-mode (args)
+  (message "auto-fill: no wai"))
+
+(defun replace-smart-quotes (beg end)
+  "Replace 'smart quotes' in buffer or region with ascii quotes."
+  (interactive "r")
+  (format-replace-strings '(("\x201C" . "\"")
+                            ("\x201D" . "\"")
+                            ("\x2018" . "'")
+                            ("\x2019" . "'"))
+                          nil beg end))
+
+
+(setq sml/theme 'light)
+(setq sml/shorten-modes 't)
+(setq sml/shorten-directory 't)
+(require 'smart-mode-line)
+(sml/setup)
