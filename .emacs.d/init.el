@@ -20,7 +20,7 @@
 (require 'package)
 
 (setq package-archives '(("elpa" . "http://tromey.com/elpa/")
-                         ;; ("melpa" . "http://melpa.milkbox.net/packages/")
+                         ("melpa" . "http://melpa.milkbox.net/packages/")
                          ("gnu" . "http://elpa.gnu.org/packages/")
                          ("marmalade" . "http://marmalade-repo.org/packages/")))
 (package-initialize)
@@ -63,6 +63,8 @@
 (require 'starter-kit-bindings)
 (require 'starter-kit-lisp)
 ;; (require 'starter-kit-js)
+(require 'sunrise-commander)
+(require 'sunrise-x-tree)
 
 (require 'enaml)
 ;; (add-to-list 'auto-mode-alist  '("\\.enaml$" . enaml-mode))
@@ -91,12 +93,14 @@
                                          (interactive)
                                          (tidal-send-string "hush")))
 
+(require 'web-mode)
+(add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
 
 (require 'asciidoc-mode)
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 (add-to-list 'auto-mode-alist '("\\.pp\\'" . puppet-mode))
 (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
-(add-to-list 'auto-mode-alist '("\\.asciidoc\\'" . asciidoc-mode))
+(add-to-list 'auto-mode-alist '("\\.asciidoc\\'" . adoc-mode))
 ;; (setq auto-mode-alist (rassq-delete-all 'visual-line-mode auto-mode-alist))
 (add-hook 'text-mode-hook 'turn-on-visual-line-mode)
 (add-hook 'markdown-mode-hook (lambda ()
@@ -120,7 +124,7 @@
 ;; (require 'linum)
 ;; (line-number-mode 1)
 ;; (column-number-mode 1)  ;; Line numbers on left most column
-;; (global-linum-mode 1)
+;; (global-linum-mode 0)
 
 (add-hook 'prog-mode-hook 'linum-mode)
 
@@ -192,9 +196,10 @@
 (setq evil-want-C-i-jump t)
 ;; (setq evil-normal-state-cursor '("white" box))
 ;; (setq evil-insert-state-cursor '("white" bar))
-(add-hook 'text-mode-hook 'turn-on-evil-mode)
-(add-hook 'prog-mode-hook 'turn-on-evil-mode)
-(add-hook 'comint-mode-hook 'turn-on-evil-mode)
+
+;; (add-hook 'text-mode-hook 'turn-on-evil-mode)
+;; (add-hook 'prog-mode-hook 'turn-on-evil-mode)
+;; (add-hook 'comint-mode-hook 'turn-on-evil-mode)
 (add-hook 'Info-mode-hook 'turn-off-evil-mode)
 (add-hook 'org-mode-hook 'turn-off-evil-mode)
 (add-hook 'direx-mode-hook 'turn-off-evil-mode)
@@ -204,10 +209,11 @@
 ;; evil doesn't always understant indent by default
 (add-hook 'python-mode-hook
           (function (lambda ()
-                      (define-key python-mode-map (kbd "RET") 'evil-ret-and-indent)
+                      ;; (define-key python-mode-map (kbd "RET") 'evil-ret-and-indent)
                       (setq evil-shift-width python-indent)
                       (setq ac-use-fuzzy nil)
                       (modify-syntax-entry ?_ "w"))))   ; recognize _* as valid identifiers
+(add-hook 'python-mode-hook 'flycheck-mode)
 
 (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
 (add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
@@ -281,8 +287,8 @@
 (global-set-key (kbd "s-\\") 'indent-for-tab-command)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 ;; buffer sufring
-(global-set-key (kbd "S-s-<left>") 'previous-buffer)
-(global-set-key (kbd "S-s-<right>") 'next-buffer)
+(global-set-key (kbd "s-<left>") 'previous-buffer)
+(global-set-key (kbd "s-<right>") 'next-buffer)
 (global-set-key (kbd "s-R") 'previous-buffer)
 (global-set-key (kbd "s-T") 'next-buffer)
 
@@ -291,10 +297,11 @@
 (global-set-key (kbd "s-[") 'tabbar-backward)
 (global-set-key (kbd "s-]") 'tabbar-forward)
 
-(global-set-key [s-left] 'windmove-left)
-(global-set-key [s-right] 'windmove-right)
-(global-set-key [s-up] 'windmove-up)
-(global-set-key [s-down] 'windmove-down)
+(global-set-key (kbd "M-s-<left>") 'windmove-left)
+(global-set-key (kbd "M-s-<right>") 'windmove-right)
+(global-set-key (kbd "M-s-<up>") 'windmove-up)
+(global-set-key (kbd "M-s-<down>") 'windmove-down)
+
 (global-set-key [s-return] 'eval-region)
 
 (global-set-key (kbd "<C-S-up>")     'buf-move-up)
@@ -490,7 +497,8 @@ Return a list of one element based on major mode."
  '(Linum-format "%7i ")
  '(ag-arguments
    (quote
-    ("--smart-case" "--nogroup" "--ignore" "TAGS" "--column" "--")))
+    ("--smart-case" "--nogroup" "--ignore" "*migrations" "--ignore" "TAGS" "--column" "--")))
+ '(ag-highlight-search t)
  '(ansi-color-faces-vector
    [default bold shadow italic underline bold bold-italic bold])
  '(ansi-color-names-vector
@@ -540,6 +548,7 @@ Return a list of one element based on major mode."
  '(sml/inactive-background-color "gray40")
  '(sml/shorten-modes t)
  '(sml/theme nil)
+ '(tool-bar-mode nil)
  '(vc-annotate-background nil)
  '(vc-annotate-color-map
    (quote
@@ -619,6 +628,7 @@ Return a list of one element based on major mode."
 
 (setq idle-update-delay 0.5) ; not sure what this does yet
 (setq idle-highlight-idle-time 0.5)
+(idle-highlight-mode t)
 
 ;; saner scrolling
 (setq redisplay-dont-pause t
@@ -727,22 +737,23 @@ Return a list of one element based on major mode."
 (require 'org-archive)
 (require 'epresent)
 (require 'org-present)
+(require 'org-journal)
 
 ; Some initial langauges we want org-babel to support
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '(
-   (sh . t)
-   (python . t)
-   (R . t)
-   (ruby . t)
-   (ditaa . t)
-   (dot . t)
-   (octave . t)
-   (sqlite . t)
-   (perl . t)
-   ))
-(setq org-src-fontify-natively t)
+; (org-babel-do-load-languages
+;  'org-babel-load-languages
+;  '(
+;    (sh . t)
+;    (python . t)
+;    (R . t)
+;    (ruby . t)
+;    (ditaa . t)
+;    (dot . t)
+;    (octave . t)
+;    (sqlite . t)
+;    (perl . t)
+;    ))
+; (setq org-src-fontify-natively t)
 
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
@@ -790,9 +801,11 @@ Return a list of one element based on major mode."
 (turn-off-auto-fill)
 (remove-hook 'text-mode-hook #'turn-on-auto-fill)
 (remove-hook 'prog-mode-hook #'turn-on-auto-fill)
+(add-hook 'text-mode-hook #'turn-off-auto-fill)
+(add-hook 'prog-mode-hook #'turn-off-auto-fill)
 
-(defun auto-fill-mode (args)
-  (message "auto-fill: no wai"))
+;; (defun auto-fill-mode (args)
+;;   (message "auto-fill: no wai"))
 
 (defun replace-smart-quotes (beg end)
   "Replace 'smart quotes' in buffer or region with ascii quotes."
@@ -809,3 +822,13 @@ Return a list of one element based on major mode."
 (setq sml/shorten-directory 't)
 (require 'smart-mode-line)
 (sml/setup)
+
+(setq-default display-buffer-reuse-frames nil)
+
+(setq web-mode-engines-alist '(("php" . "\\.phtml\\'")
+                               ("blade" . "\\.blade\\.")
+                               ("django" . "\\.html\\'")))
+
+(setq mac-emulate-three-button-mouse t)
+(my-fix-hl-line-color)
+(exec-path-from-shell-initialize)
