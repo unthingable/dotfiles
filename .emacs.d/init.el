@@ -27,9 +27,9 @@
 
 (defvar my-packages '(
                       auto-complete
-                      starter-kit
-                      starter-kit-lisp
-                      starter-kit-bindings
+;;                      starter-kit
+;;                      starter-kit-lisp
+;;                      starter-kit-bindings
                       js2-mode
                       buffer-move
                       dired+
@@ -59,9 +59,10 @@
 ;; (package-refresh-contents)
 (when (not package-archive-contents) (package-refresh-contents))
 
-(require 'starter-kit)
-(require 'starter-kit-bindings)
-(require 'starter-kit-lisp)
+;;(require 'starter-kit)
+;;(require 'starter-kit-bindings)
+;;(require 'starter-kit-lisp)
+
 ;; (require 'starter-kit-js)
 (require 'sunrise-commander)
 (require 'sunrise-x-tree)
@@ -82,6 +83,7 @@
                                               (cider-eval-region (region-beginning) (region-end))
                                             (cider-eval-last-sexp))))
 
+(require 'extempore)
 (require 'tidal)
 (define-key tidal-mode-map [s-return] (lambda ()
                                           (interactive)
@@ -101,6 +103,8 @@
 (add-to-list 'auto-mode-alist '("\\.pp\\'" . puppet-mode))
 (add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
 (add-to-list 'auto-mode-alist '("\\.asciidoc\\'" . adoc-mode))
+
+(add-to-list 'auto-mode-alist '("\\.xtm\\'" . extempore-mode))
 ;; (setq auto-mode-alist (rassq-delete-all 'visual-line-mode auto-mode-alist))
 (add-hook 'text-mode-hook 'turn-on-visual-line-mode)
 (add-hook 'markdown-mode-hook (lambda ()
@@ -127,6 +131,7 @@
 ;; (global-linum-mode 0)
 
 (add-hook 'prog-mode-hook 'linum-mode)
+(add-hook 'prog-mode-hook  (lambda () (idle-highlight-mode t)))
 
 ;; (require 'sr-speedbar)
 ;; (setq sr-speedbar-auto-refresh t)
@@ -256,8 +261,16 @@
   ;; (tags-completion-table)
   (find-tag tagname))
 
+(defun backward-delete-word (arg)
+  "Delete characters backward until encountering the beginning of a word.
+With argument ARG, do this that many times."
+  (interactive "p")
+  (delete-region (point) (progn (backward-word arg) (point))))
+
+(global-set-key [M-backspace] 'backward-delete-word)
 
 ;; some keys
+(global-set-key (kbd "M-X") 'smex)
 (global-set-key (kbd "M-<tab>") 'auto-complete)
 (global-set-key (kbd "M-S-<tab>") 'ac-fuzzy-complete)
 
@@ -272,9 +285,10 @@
 (global-set-key (kbd "C->") 'mc/mark-all-like-this-dwim)
 
 ;; Ponder some more.
-(global-set-key (kbd "C-x j") 'dired-jump)
+;; (global-set-key (kbd "C-x j") 'dired-jump)
 (global-set-key (kbd "C-x 4 j") 'dired-jump-other-window)
 (global-set-key (kbd "C-x C-j") 'direx:jump-to-directory)
+(global-set-key (kbd "C-x j") 'direx:jump-to-directory)
 (global-set-key (kbd "C-x 4 C-j") 'direx:jump-to-directory-other-window)
 (global-set-key (kbd "C-x C-o") 'direx-project:jump-to-project-root-other-window)
 
@@ -504,7 +518,7 @@ Return a list of one element based on major mode."
  '(ansi-color-names-vector
    ["#110F13" "#b13120" "#719f34" "#ceae3e" "#7c9fc9" "#7868b5" "#009090" "#F4EAD5"])
  '(ansi-term-color-vector
-   [unspecified "#110F13" "#b13120" "#719f34" "#ceae3e" "#7c9fc9" "#7868b5" "#009090" "#F4EAD5"])
+   [unspecified "#110F13" "#b13120" "#719f34" "#ceae3e" "#7c9fc9" "#7868b5" "#009090" "#F4EAD5"] t)
  '(background-color "#042028")
  '(background-mode dark)
  '(cursor-color "#708183")
@@ -576,7 +590,8 @@ Return a list of one element based on major mode."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(rainbow-delimiters-depth-7-face ((t (:foreground "firebrick2"))))
+ '(rainbow-delimiters-depth-8-face ((t (:foreground "turquoise2")))))
 
 
 ;; because one bad apple (fullscreen without the stupid spaces)
@@ -832,3 +847,7 @@ Return a list of one element based on major mode."
 (setq mac-emulate-three-button-mouse t)
 (my-fix-hl-line-color)
 (exec-path-from-shell-initialize)
+
+(setq user-extempore-directory "/usr/local/Cellar/extempore/0.58/")
+(autoload 'extempore-mode "/usr/local/Cellar/extempore/0.58/extras/extempore.el" "" t)
+(add-to-list 'auto-mode-alist '("\\.xtm$" . extempore-mode))
